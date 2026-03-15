@@ -74,8 +74,7 @@ pipeline {
             steps {
                 echo "Running smoke test against backend health endpoint..."
                 sh '''
-                    BACKEND_URL=$(minikube service todo-backend-service -n todo-app --url 2>/dev/null || echo "http://localhost:8080")
-                    curl --fail --silent ${BACKEND_URL}/todos/health || exit 1
+                    kubectl exec -n todo-app deployment/todo-backend -- wget -qO- http://localhost:8080/todos/health
                     echo "Health check passed!"
                 '''
             }
