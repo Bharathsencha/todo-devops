@@ -1,6 +1,26 @@
 # Todo DevOps Project
 ## Jenkins + Maven + Docker + Kubernetes + Terraform
 
+### Quick guide :
+
+```bash
+cd ~/Desktop/devops
+```
+```bash
+make run      # start everything (Minikube + Jenkins)
+```
+```bash
+make open     # open the app in browser
+```
+```bash
+make status   # check pods are healthy
+```
+```bash
+make deploy   # after you change code
+```
+```bash
+make stop     # when done for the day
+```
 ---
 
 ## Step 1 — Create the project folder structure
