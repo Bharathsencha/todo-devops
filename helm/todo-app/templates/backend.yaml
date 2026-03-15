@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-backend
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: todo-backend
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: todo-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: todo-backend
+    spec:
+      containers:
+        - name: todo-backend
+          image: {{ .Values.backend.image }}:{{ .Values.backend.tag }}
+          imagePullPolicy: Never   # use local Minikube image
+          ports:
+            - containerPort: {{ .Values.backend.port }}
+          resources:
+            requests:
+              memory: {{ .Values.backend.resources.requests.memory }}
+              cpu: {{ .Values.backend.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.backend.resources.limits.memory }}
+              cpu: {{ .Values.backend.resources.limits.cpu }}
+          readinessProbe:
+            httpGet:
+              path: /todos/health
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /todos/health
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-backend-service
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: todo-backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: {{ .Values.backend.port }}
+  type: ClusterIP
