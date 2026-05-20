@@ -69,6 +69,8 @@ run:
 	@echo "    App:     run 'make open'"
 	@echo "    Jenkins: http://localhost:$(JENKINS_PORT)"
 open:
+	@echo "==> Ensuring Minikube is running..."
+	@minikube status >/dev/null 2>&1 || minikube start --driver=docker --memory=3000 --cpus=2
 	@echo "==> Ensuring Jenkins is running..."
 	@if ss -ltn | grep -q :$(JENKINS_PORT); then \
 		echo "    Jenkins already running."; \
@@ -87,7 +89,10 @@ open:
 	-pkill -f "kubectl port-forward.*$(BACKEND_LOCAL_PORT):8080" || true
 	kubectl port-forward -n $(NAMESPACE) svc/todo-backend-service $(BACKEND_LOCAL_PORT):8080 >/dev/null 2>&1 &
 	@echo "==> Waiting for backend API to be available on localhost:$(BACKEND_LOCAL_PORT)..."
-	@until curl -s -f -o /dev/null "http://127.0.0.1:$(BACKEND_LOCAL_PORT)/todos/health"; do sleep 1; done
+	@timeout 60 sh -c 'until curl -s -f -o /dev/null "http://127.0.0.1:$(BACKEND_LOCAL_PORT)/todos/health"; do sleep 1; done' || { \
+		echo "    Backend never became ready. Run 'make setup' or 'make deploy' to create the cluster and deploy the app."; \
+		exit 1; \
+	}
 	@echo "==> Connected! Launching JavaFX..."
 	mvn exec:java -Dexec.mainClass="com.todo.client.TodoClientLauncher"
 
