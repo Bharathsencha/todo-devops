@@ -1,14 +1,34 @@
 NAMESPACE   = todo-app
 BACKEND_IMG = todo-backend
 JENKINS_WAR = $(HOME)/jenkins.war
-JENKINS_PORT= 9090
+JENKINS_PORT= 8080
+BACKEND_LOCAL_PORT = 8081
 
-.PHONY: all setup run stop clean restart status logs help
+.PHONY: all setup run stop clean restart status logs help check-prereqs
 
 # Default target
 all: help
 
+check-prereqs:
+	@missing_tools=""; \
+	for tool in minikube kubectl helm docker mvn; do \
+		if ! command -v $$tool >/dev/null 2>&1; then \
+			missing_tools="$$missing_tools $$tool"; \
+		fi; \
+	done; \
+	if [ -n "$$missing_tools" ]; then \
+		echo "Missing required tools:$$missing_tools"; \
+		echo "Install them before running make setup. See README.md for the setup commands."; \
+		exit 1; \
+	fi; \
+	if ! docker info >/dev/null 2>&1; then \
+		echo "Docker is installed, but the daemon is not reachable from this shell."; \
+		echo "Fix Docker access first, for example: sudo usermod -aG docker \$$USER && newgrp docker"; \
+		exit 1; \
+	fi
+
 setup:
+	@$(MAKE) --no-print-directory check-prereqs
 	@echo ""
 	@echo "==> Starting Minikube..."
 	minikube start --driver=docker --memory=3000 --cpus=2
@@ -28,6 +48,7 @@ setup:
 	@echo "==> Done! Run 'make open' to open the app."
 
 run:
+	@$(MAKE) --no-print-directory check-prereqs
 	@echo ""
 	@echo "==> Starting Minikube..."
 	minikube start --driver=docker --memory=3000 --cpus=2
@@ -51,14 +72,15 @@ open:
 	@echo "==> Opening Jenkins..."
 	-xdg-open http://localhost:$(JENKINS_PORT) >/dev/null 2>&1 &
 	@echo "==> Opening Backend Tunnel & Client..."
-	-pkill -f "kubectl port-forward.*8080:8080" || true
-	kubectl port-forward -n $(NAMESPACE) svc/todo-backend-service 8080:8080 >/dev/null 2>&1 &
-	@echo "==> Waiting for backend API to be available on localhost:8080..."
-	@until curl -s -f -o /dev/null "http://127.0.0.1:8080/todos/health"; do sleep 1; done
+	-pkill -f "kubectl port-forward.*$(BACKEND_LOCAL_PORT):8080" || true
+	kubectl port-forward -n $(NAMESPACE) svc/todo-backend-service $(BACKEND_LOCAL_PORT):8080 >/dev/null 2>&1 &
+	@echo "==> Waiting for backend API to be available on localhost:$(BACKEND_LOCAL_PORT)..."
+	@until curl -s -f -o /dev/null "http://127.0.0.1:$(BACKEND_LOCAL_PORT)/todos/health"; do sleep 1; done
 	@echo "==> Connected! Launching JavaFX..."
 	mvn exec:java -Dexec.mainClass="com.todo.client.TodoClientLauncher"
 
 deploy:
+	@$(MAKE) --no-print-directory check-prereqs
 	@echo ""
 	@echo "==> Rebuilding images..."
 	mvn clean package -DskipTests -q
@@ -73,6 +95,7 @@ deploy:
 	@echo "==> Deployed! Run 'make open' to view."
 
 status:
+	@$(MAKE) --no-print-directory check-prereqs
 	@echo ""
 	@echo "==> Minikube:"
 	minikube status
@@ -87,24 +110,28 @@ status:
 	kubectl get deployments -n $(NAMESPACE)
 
 logs:
+	@$(MAKE) --no-print-directory check-prereqs
 	@echo "==> Backend logs:"
 	kubectl logs -n $(NAMESPACE) deployment/todo-backend --tail=50
 
 stop:
+	@$(MAKE) --no-print-directory check-prereqs
 	@echo "==> Stopping Jenkins..."
 	@kill $$(lsof -t -i:$(JENKINS_PORT)) 2>/dev/null && echo "    Jenkins stopped." || echo "    Jenkins was not running."
 	@echo "==> Stopping Port-Forward..."
-	-pkill -f "kubectl port-forward.*8080:8080" || true
+	-pkill -f "kubectl port-forward.*$(BACKEND_LOCAL_PORT):8080" || true
 	@echo "==> Stopping Minikube..."
 	minikube stop
 	@echo "==> All stopped."
 
 clean:
+	@$(MAKE) --no-print-directory check-prereqs
 	@echo "==> Deleting Minikube cluster..."
 	minikube delete
 	@echo "==> Clean done. Run 'make setup' to start fresh."
 
 restart:
+	@$(MAKE) --no-print-directory check-prereqs
 	kubectl rollout restart deployment/todo-backend  -n $(NAMESPACE)
 	kubectl rollout status  deployment/todo-backend  -n $(NAMESPACE) --timeout=90s
 	@echo "==> Pods restarted and ready!"

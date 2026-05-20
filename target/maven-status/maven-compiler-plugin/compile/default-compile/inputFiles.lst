@@ -1,5 +1,5 @@
-/home/bharath/Desktop/devops/src/main/java/com/todo/TodoApplication.java
-/home/bharath/Desktop/devops/src/main/java/com/todo/client/TodoUI.java
-/home/bharath/Desktop/devops/src/main/java/com/todo/client/TodoClientLauncher.java
-/home/bharath/Desktop/devops/src/main/java/com/todo/controller/TodoController.java
-/home/bharath/Desktop/devops/src/main/java/com/todo/model/Todo.java
+/home/bharath/Desktop/todo-devops/src/main/java/com/todo/TodoApplication.java
+/home/bharath/Desktop/todo-devops/src/main/java/com/todo/model/Todo.java
+/home/bharath/Desktop/todo-devops/src/main/java/com/todo/controller/TodoController.java
+/home/bharath/Desktop/todo-devops/src/main/java/com/todo/client/TodoClientLauncher.java
+/home/bharath/Desktop/todo-devops/src/main/java/com/todo/client/TodoUI.java

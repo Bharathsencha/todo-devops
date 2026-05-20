@@ -23,7 +23,7 @@ import java.util.List;
 
 public class TodoUI extends Application {
 
-    private static final String API_URL = "http://127.0.0.1:8080/todos";
+        private static final String API_URL = "http://127.0.0.1:8081/todos";
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
