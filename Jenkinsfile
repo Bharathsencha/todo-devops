@@ -32,8 +32,22 @@ pipeline {
             steps {
                 echo "Building Docker images..."
                 sh '''
-                    eval $(minikube docker-env)
-                    docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -t ${BACKEND_IMAGE}:latest .
+                    # Prefer building inside Minikube's Docker daemon when available
+                    if command -v minikube >/dev/null 2>&1; then
+                        if minikube status >/dev/null 2>&1; then
+                            echo "Using Minikube's Docker daemon"
+                            eval $(minikube docker-env)
+                        else
+                            echo "Minikube is installed but not running; attempting host Docker build"
+                        fi
+                    else
+                        echo "Minikube is not installed; attempting host Docker build"
+                    fi
+
+                    docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -t ${BACKEND_IMAGE}:latest . || {
+                        echo "Docker build failed. If this is a permissions error, ensure the Jenkins user can access the Docker socket or run 'scripts/jenkins-setup.sh' as your user to copy Minikube/Kube configs and add Jenkins to the docker group.";
+                        exit 1;
+                    }
                 '''
             }
         }

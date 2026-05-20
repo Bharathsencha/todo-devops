@@ -224,6 +224,30 @@ sudo chown -R jenkins:jenkins /var/lib/jenkins/.minikube
 - Set **Script Path** to `Jenkinsfile`
 - Click **Save**
 
+### 4. Make Jenkins access Minikube and Docker (optional helper)
+
+If your Jenkins server cannot access Docker or Minikube, run the helper script on the host (requires sudo). This will add the `jenkins` user to the `docker` group, copy your kube/minikube config, and restart Jenkins:
+
+```bash
+cd ~/todo-devops
+chmod +x scripts/jenkins-setup.sh
+./scripts/jenkins-setup.sh
+```
+
+Run this only on the machine where Jenkins is installed (it requires sudo).
+
+### Pushing changes to GitHub
+
+If you want to push changes in this repo to GitHub, create a commit and push to your remote. Example:
+
+```bash
+git add .
+git commit -m "Make Jenkinsfile prefer Minikube and add helper"
+git push origin main
+```
+
+If `git push` fails due to authentication, ensure you have SSH keys or HTTPS credentials configured for GitHub.
+
 ### 4. Initialize the folder as a git repo
 
 ```bash
