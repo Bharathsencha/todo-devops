@@ -69,6 +69,18 @@ run:
 	@echo "    App:     run 'make open'"
 	@echo "    Jenkins: http://localhost:$(JENKINS_PORT)"
 open:
+	@echo "==> Ensuring Jenkins is running..."
+	@if ss -ltn | grep -q :$(JENKINS_PORT); then \
+		echo "    Jenkins already running."; \
+	else \
+		if [ -f $(JENKINS_WAR) ]; then \
+			echo "    Starting Jenkins from $(JENKINS_WAR)"; \
+			java -jar $(JENKINS_WAR) --httpPort=$(JENKINS_PORT) > /tmp/jenkins.log 2>&1 & \
+			sleep 5; \
+		else \
+			echo "    Jenkins not running. Start it with 'make run' or 'sudo systemctl start jenkins'"; \
+		fi; \
+	fi
 	@echo "==> Opening Jenkins..."
 	-xdg-open http://localhost:$(JENKINS_PORT) >/dev/null 2>&1 &
 	@echo "==> Opening Backend Tunnel & Client..."
